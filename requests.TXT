@@ -1,0 +1,3 @@
+SELECT * FROM db
+SELECT * FROM db WHERE dateFoundation = '00-00-0000'
+SELECT name, dateFoundation FROM db
