@@ -77,20 +77,28 @@ public class DataBaseFinder {
 
             int k = 0;
 
-            while (resultSet.next()) {
-                int i = 1;
-                toAdd = new JSONObject();
-                try {
-                    while (true) {
-                        toAdd.put(rsmd.getColumnName(i), resultSet.getString(i));
-                        i++;
+            try (PrintWriter pw1 = new PrintWriter("request" + pos + ".xml")) {
+                pw1.println("<companies>");
+                while (resultSet.next()) {
+                    int i = 1;
+                    toAdd = new JSONObject();
+                    pw1.println("<company_" + k + ">");
+                    try {
+                        while (true) {
+                            toAdd.put(rsmd.getColumnName(i), resultSet.getString(i));
+                            pw1.println("<" + rsmd.getColumnName(i) + ">" + resultSet.getString(i) + "</" + rsmd.getColumnName(i) + ">");
+                            i++;
+                        }
+                    } catch (Exception e) {
                     }
-                } catch (Exception e) { }
-                toRet.put("company_" + k, toAdd);
-                k++;
-            }
-            try (PrintWriter pw = new PrintWriter("request" + pos + ".json")) {
-                pw.println(toRet);
+                    toRet.put("company_" + k, toAdd);
+                    pw1.println("</company_" + k + ">");
+                    k++;
+                }
+                pw1.println("</companies>");
+                try (PrintWriter pw = new PrintWriter("request" + pos + ".json")) {
+                    pw.println(toRet);
+                }
             }
         }
     }

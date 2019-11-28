@@ -1,3 +1,3 @@
-SELECT * FROM db
-SELECT * FROM db WHERE dateFoundation = '00-00-0000'
-SELECT name, dateFoundation FROM db
+SELECT * FROM db WHERE shortTitle = 'title'
+SELECT * FROM db WHERE branch = 'branch'
+SELECT name, dateFoundation, countEmployees FROM db WHERE countEmployees < 550
