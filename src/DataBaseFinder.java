@@ -6,8 +6,20 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class DataBaseFinder {
+
+    private static final Logger logger = Logger.getLogger("log");
+
+    static {
+        try {
+            LogManager.getLogManager().readConfiguration(new FileInputStream("logging.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static Connection getConnection() throws SQLException, IOException {
 
@@ -15,24 +27,20 @@ public class DataBaseFinder {
         try (InputStream in = Files.newInputStream(Paths.get("database.properties"))) {
             props.load(in);
         }
-        String url = props.getProperty("url");
-        String username = props.getProperty("username");
-        String password = props.getProperty("password");
-
-        return DriverManager.getConnection(url, username, password);
+        return DriverManager.getConnection(props.getProperty("url"), props.getProperty("username"), props.getProperty("password"));
     }
 
     public void createDataBase() throws IOException, SQLException {
 
         try (Connection c = getConnection()) {
-            String sqlCommand = "CREATE TABLE db (name VARCHAR(100), shortTitle VARCHAR(100), dateUpdate VARCHAR(100), " +
+            String sqlCommand = "CREATE TABLE DB (name VARCHAR(100), shortTitle VARCHAR(100), dateUpdate VARCHAR(100), " +
                     "address VARCHAR(100), dateFoundation VARCHAR(100), countEmployees INT, auditor VARCHAR(100), phone VARCHAR(100), " +
                     "email VARCHAR(100), branch VARCHAR(100), activity VARCHAR(100), link VARCHAR(100))";
             Statement statement = c.createStatement();
             statement.executeUpdate(sqlCommand);
-            System.out.println("Database has been created!");
+            logger.info("Database has been created!");
         } catch (SQLSyntaxErrorException e) {
-            System.out.println(e.getMessage().toUpperCase());
+            logger.info(e.getMessage().toUpperCase());
         }
     }
 
@@ -43,7 +51,7 @@ public class DataBaseFinder {
 
                 while (sc.hasNextLine()) {
                     try (Scanner scWords = new Scanner(sc.nextLine()).useDelimiter(";")) {
-                        String sqlCommand = "INSERT INTO db (name, shortTitle, dateUpdate, " +
+                        String sqlCommand = "INSERT INTO DB (name, shortTitle, dateUpdate, " +
                                 "address, dateFoundation, countEmployees, auditor, phone, " +
                                 "email, branch, activity, link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
                         PreparedStatement preparedStatement = c.prepareStatement(sqlCommand);
@@ -65,6 +73,7 @@ public class DataBaseFinder {
                 }
             }
         }
+        logger.info("Data was loaded");
     }
 
     public void find(String request, int pos) throws IOException, SQLException {
@@ -75,14 +84,16 @@ public class DataBaseFinder {
             JSONObject toRet = new JSONObject();
             JSONObject toAdd;
 
-            int k = 0;
+            int c_num = 0;
 
             try (PrintWriter pw1 = new PrintWriter("request" + pos + ".xml")) {
                 pw1.println("<companies>");
+
                 while (resultSet.next()) {
                     int i = 1;
                     toAdd = new JSONObject();
-                    pw1.println("<company_" + k + ">");
+                    pw1.println("<company_" + c_num + ">");
+
                     try {
                         while (true) {
                             toAdd.put(rsmd.getColumnName(i), resultSet.getString(i));
@@ -91,23 +102,27 @@ public class DataBaseFinder {
                         }
                     } catch (Exception e) {
                     }
-                    toRet.put("company_" + k, toAdd);
-                    pw1.println("</company_" + k + ">");
-                    k++;
+
+                    toRet.put("company_" + c_num, toAdd);
+                    pw1.println("</company_" + c_num + ">");
+                    c_num++;
                 }
                 pw1.println("</companies>");
+
                 try (PrintWriter pw = new PrintWriter("request" + pos + ".json")) {
                     pw.println(toRet);
                 }
             }
+            logger.info(c_num + " companies were found by the request: " + request);
         }
     }
 
     public void dropDataBase() throws IOException, SQLException {
         try (Connection c = getConnection()) {
             Statement st = c.createStatement();
-            st.executeUpdate("DROP TABLE IF EXISTS db");
+            st.executeUpdate("DROP TABLE IF EXISTS DB");
         }
+        logger.info("Database was deleted");
     }
 
 }

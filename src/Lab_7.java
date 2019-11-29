@@ -1,7 +1,22 @@
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Scanner;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class Lab_7 {
+
+    private static final Logger logger = Logger.getLogger("log");
+
+    static {
+        try {
+            LogManager.getLogManager().readConfiguration(new FileInputStream("logging.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
         try {
             DataBaseFinder dbf = new DataBaseFinder();
@@ -18,7 +33,7 @@ public class Lab_7 {
 
             dbf.dropDataBase();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            logger.info(e.getMessage());
         }
     }
 }
